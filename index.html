@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Stock Stalker</title>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+
+    <style type="text/css">
+
+        .float-container {
+            width: 180em;
+            border: 10px solid #fff;
+            padding: 2px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        td.tdWDate {
+            padding-bottom:  5px;
+            vertical-align: middle;
+        }
+
+        td.tdWDate:not(.date-selected) {
+            /*display: none;*/
+        }
+            
+
+        td.copyable {
+            cursor: pointer;
+        }
+
+        td.copyable:hover {
+            background-color: #6489ce;
+        }
+
+        .float-child {
+            max-width: 27%;
+            float: left;
+            padding: 2px;
+            border: 2px solid red;
+        } 
+
+        .date-selected {
+            background-color: #8EA9DB;
+            color: white;
+        }
+    </style>
+</head>
+<body  onload="loadAllTickers()">
+
+    <span>
+        <input type="date" id="date_input" onchange="changedDate(this)">
+        <span id="copied-text-p"></span>
+    </span>
+
+
+    <div id="mainContainer" class="float-container">
+    </div>
+
+<script type="text/javascript">
+
+const usdInEurTicker = "CURRENCY/US/XTUP/USDEUR"
+const allTickers = [
+    "STOCK/US/XNAS/AAPL",
+    "STOCK/US/XNAS/ABNB",
+    "STOCK/US/XNAS/AMZN",
+    "STOCK/US/XNYS/DIS",
+    "STOCK/US/XNYS/FTCH",
+    "STOCK/US/XNAS/MSFT",
+    "STOCK/US/XNYS/SHOP",
+    "FUND/NL/XAMS/VUSA",
+]
+
+var hideNonSelectedDates = false
+
+function print(str) { console.log(str) }
+const zip = (a, b) => a.map((k, i) => [k, b[i]]);
+const chunkArray = (arr, size) =>
+    arr.length > size
+    ? [arr.slice(0, size), ...chunkArray(arr.slice(size), size)]
+    : [arr];
+
+var response__ = {}
+
+function loadTickers(tickers) {
+    let series = tickers.map(ticker => {
+        return {
+            "DataTypes": ["Last"],
+            "Dialect": "Charting",
+            "Key": ticker,
+            "Kind": "Ticker",
+            "SeriesId": "s1"
+        }
+    })
+    let json = {
+        "EntitlementToken": "cecc4267a0194af89ca343805a3e57af",
+        "IncludeOfficialClose": true,
+        "Series": series,
+        "Step": "P1D",
+        "TimeFrame": "P3M",
+        "WantPriorClose": true
+    }
+    let jsonText = JSON.stringify(json)
+
+    var request = new Request(
+        `https://api-secure.wsj.net/api/michelangelo/timeseries/history?json=${jsonText}&ckey=cecc4267a0`, 
+        { 
+            method: 'GET', 
+            // body: {}, 
+            headers: new Headers({ 
+                'Host': 'api-secure.wsj.net',
+                'Origin': 'https://www.marketwatch.com',
+                'Connection': 'keep-alive',
+                'Dylan2010.EntitlementToken': 'cecc4267a0194af89ca343805a3e57af',
+                'Accept': 'application/json, text/javascript, */*; q=0.01',
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Safari/605.1.15',
+                'Accept-Language': 'en-GB,en;q=0.9',
+                'Referer': 'https://www.marketwatch.com/',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Content-Type': 'application/json; charset=utf-8',
+            }) 
+        });
+
+    return fetch(request) 
+    .then((response) => response.json())
+    .then(jsonResponse => { 
+
+        let dates = jsonResponse.TimeInfo.Ticks
+
+            
+        let series = jsonResponse.Series.map(serie => {
+
+            let dataPoints = serie.DataPoints.flatMap(num => num)
+            let values_ = zip(dates, dataPoints)
+            let values = values_
+                .map(item => { 
+                    return { date: item[0], value: item[1] } 
+                })
+
+            return {
+                ticker: serie.Ticker,
+                values: values
+            }
+        })
+
+        return series
+    }) 
+    .catch(err => { 
+        print(err)
+    });
+}
+
+function loadAllTickers() {
+
+    $("#date_input").val(new Date().toLocaleDateString("en-CA")) // Hammer time yeah!
+    $("#date_input").attr("max", new Date().toLocaleDateString("en-CA")) // Hammer time yeah!
+    $("#date_input").change(clickedDateBox($("#date-picker")))
+    
+    let tickers = [usdInEurTicker].concat(allTickers)
+    let tickersRequests = chunkArray(tickers, 5)
+    let reqs = tickersRequests.map(requestTickers => loadTickers(requestTickers))
+
+    Promise
+    .all(reqs)
+    .then(responses => {
+        let tickerValues = responses.flatMap(response => response)                
+        let usdToEur = tickerValues.find(element => element.ticker == "USDEUR")
+        let tickers = tickerValues.filter(element => element.ticker != "USDEUR")
+
+        let euroAt = function(date) {
+            return usdToEur.values.find(element => element.date == date)
+        }
+
+        let tickerNames = tickers.map(ticker => `<th>${ticker.ticker}</th>`)
+
+        let currencyLis = usdToEur.values.map((stockAtDate, index) => {
+            let date = new Date(stockAtDate.date).toLocaleDateString("pt-PT").replaceAll("/", "-")
+            let value = stockAtDate.value
+            return `<tr>
+                    <td class="tdWDate td_date_${date}" style="text-align: right">${date}</td>
+                    <td class="tdWDate td_date_${date}" style="text-align: right">${value}</td>
+                  </tr>`
+        }).join("")
+        
+        $("#date_input").attr("min", new Date(usdToEur.values[0].date).toLocaleDateString("en-CA")) // Hammer time yeah!
+
+        let currency = `
+                <div class="float-child">
+                <h1>${usdToEur.ticker}</h1>
+                <table>
+                  <tr>
+                    <th>Date</th>
+                    <th>€</th>
+                  </tr>
+                  ${currencyLis}
+                </table>
+                </div>`
+
+        let stocks = tickers.map(ticker => {
+
+            let tickerLis = ticker.values.map(value => {
+                let date = new Date(value.date).toLocaleDateString("pt-PT").replaceAll("/", "-")
+                let stockValue = value.value
+                let inEuro = stockValue * (ticker.ticker == "VUSA" ? 1 : value.value)
+                return `<tr>
+                    <td class="tdWDate td_date_${date}" style="text-align: right">${stockValue} &nbsp;&nbsp;</td>
+                    <td class="tdWDate td_date_${date} copyable" style="text-align: right" onClick="clickedCell(this)">${inEuro}</td>
+                  </tr>`
+            }).join("")
+
+            return `
+                <div class="float-child">
+                <h1>${ticker.ticker}</h1>
+                <table>
+                  <tr>
+                    <th>$</th> 
+                    <th>€</th>
+                  </tr>
+                  ${tickerLis}
+                </table>
+                </div>`
+        }).join("")
+
+        let html = currency + stocks
+        $("#mainContainer").html(html)
+        clickedDateBox()
+    })
+}
+
+function changedDate(element) {
+    clickedDateBox()
+}
+
+function clickedDateBox() {
+    $(".date-selected").each((i, td) => {
+        $(td).removeClass("date-selected")
+    })
+    let date = new Date($("#date_input").val()).toLocaleDateString()
+    let dateClass = `td_date_${date}`.replaceAll("/", "-")
+     $("." + dateClass).each((i, td) => {
+        $(td).addClass("date-selected")
+    })
+}
+
+function clickedCell(td) {
+    let text = $(td).text().replaceAll(".", ",")
+    navigator.clipboard.writeText(text);
+    $("#copied-text-p").text("Copied text " + text)
+
+}
+</script>
+</body>
+</html>
