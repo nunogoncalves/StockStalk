@@ -203,7 +203,7 @@ function loadAllTickers() {
             let tickerLis = ticker.values.map(value => {
                 let date = new Date(value.date).toLocaleDateString("pt-PT").replaceAll("/", "-")
                 let stockValue = value.value
-                let inEuro = stockValue * (ticker.ticker == "VUSA" ? 1 : value.value)
+                let inEuro = stockValue * ((ticker.ticker == "VUSA") ? 1 : euroAt(value.date).value)
                 return `<tr>
                     <td class="tdWDate td_date_${date}" style="text-align: right">${stockValue} &nbsp;&nbsp;</td>
                     <td class="tdWDate td_date_${date} copyable" style="text-align: right" onClick="clickedCell(this)">${inEuro}</td>
