@@ -7,13 +7,16 @@ function loadTickers(tickers) {
         .then(jsonResponse => { 
 
             let dates = jsonResponse.TimeInfo.Ticks
+            
+            let exchangeRaw = jsonResponse.Series.find(serie => serie.Ticker == "USDEUR")
+            let exchange = new Exchange(exchangeRaw, dates)
 
-            return jsonResponse.Series.map(serie => {
-                let dataPoints = serie.DataPoints.flatMap(num => num)
-                let values = zip(dates, dataPoints).map(item => ({ date: item[0], value: item[1] }))
-                return { ticker: serie.Ticker, values: values }
-            })
-        }) 
+            let stocks = jsonResponse.Series
+                .filter(serie => serie.Ticker != "USDEUR")
+                .map(serie => new StockHistory(serie, dates, exchange))
+
+            return [exchange].concat(stocks)
+        })
         .catch(err => { 
             print(err)
         });
@@ -37,68 +40,61 @@ function loadAllTickers() {
     Promise
         .all(reqs)
         .then(responses => {
-            let tickerValues = responses.flatMap(response => response)                
-            let usdToEur = tickerValues.find(element => element.ticker == "USDEUR")
-            let tickers = tickerValues.filter(element => element.ticker != "USDEUR")
+            let stocksAndExchanges = responses.flatMap(response => response)
+            let exchange = stocksAndExchanges.find(element => element.ticker == "USDEUR")
+            let stocks = stocksAndExchanges.filter(element => element.ticker != "USDEUR")
 
-            let euroAt = (date => usdToEur.values.find(element => element.date == date) )
+            let tableData = { 
+                headers: ['Date', '€'], 
+                body: exchange.history.map(day => {
+                    return {
+                        row: { date: day.dateOutput },
+                        one: { classes: [], displayValue: day.dateOutput }, 
+                        two: { classes: [], displayValue: day.value.toFixed(4) } 
+                    }                    
+                })
+            }
 
-            var tableData = { headers: ['Date', '€'], body: []}
+            $("#date_input").attr("min", new Date(exchange.history[0].date).toLocaleDateString("en-CA")) // Hammer time yeah!
 
-            tableData.body = usdToEur.values.map((stockAtDate, index) => {
-                let date = new Date(stockAtDate.date).toLocaleDateString("pt-PT").replaceAll("/", "-")
-
-                return {
-                    row: { date: date },
-                    one: { classes: [], displayValue: date }, 
-                    two: { classes: [], displayValue: stockAtDate.value.toFixed(4) } 
-                }
-            })
-            
-            $("#date_input").attr("min", new Date(usdToEur.values[0].date).toLocaleDateString("en-CA")) // Hammer time yeah!
-
-            let currency = `
+            let exchangeHTML = `
                 <div class="container-child">
-                    <h1>${usdToEur.ticker}</h1>
+                    <h1>${exchange.ticker}</h1>
                     ${buildTableHTML(tableData)}
                 </div>
             `
 
-            let stocks = tickers.map(ticker => {
+            let stocksHTML = stocks.map(stock => {
 
-                tableData = { headers: ['$', '€'], body: []}
+                let tableData = { 
+                    headers: ['$', '€'], 
+                    body: stock.history.map(day => {
+                        let dollarClasses = day.value == null ? "null" : ""
+                        let valueClasses = day.value == null ? "null" : "copyable"
 
-                tableData.body = ticker.values.map(value => {
-                    let date = new Date(value.date).toLocaleDateString("pt-PT").replaceAll("/", "-")
-                    let stockValue = value.value ?? 0
-                    let inEuro = stockValue * ((ticker.ticker == "VUSA") ? 1 : euroAt(value.date)?.value ?? "")
-
-                    let dollarClasses = value.value == null ? "null" : ""
-                    let valueClasses = value.value == null ? "null" : "copyable"
-                    
-                    return { 
-                        row: { date: date },
-                        one: { 
-                            classes: dollarClasses,
-                            displayValue: stockValue.toFixed(4) 
-                        }, 
-                        two: { 
-                            displayValue: inEuro.toFixed(4),
-                            copyableValue: inEuro,
-                            classes: valueClasses,
-                            null: value.value == 0
-                        }
-                    }
-                })
+                        return {
+                            row: { date: day.dateOutput },
+                            one: { 
+                                classes: dollarClasses, 
+                                displayValue: day.value?.toFixed(4) ?? '' 
+                            }, 
+                            two: { 
+                                classes: valueClasses, 
+                                copyableValue: day.convertedValue,
+                                displayValue: day.convertedValue?.toFixed(4) ?? ''
+                            } 
+                        }                    
+                    })
+                }
 
                 return `
                     <div class="container-child">
-                    <h1>${ticker.ticker}</h1>
+                    <h1>${stock.ticker}</h1>
                     ${buildTableHTML(tableData)}
                     </div>`
             }).join('')
 
-            let html = currency + stocks
+            let html = exchangeHTML + stocksHTML
             $("#mainContainer").html(html)
             clickedDateBox()
         })
@@ -133,8 +129,8 @@ function changedTimePeriod(element) {
 }
 
 function clickedCell(td) {
-    let toCopy = `${$(td).data("copyable")}`
-    let text = toCopy.replaceAll(".", ",")
+    let toCopy = $(td).data("copyable")
+    let text = `${toCopy}`.replaceAll(".", ",")
     copy(text)
 }
 
@@ -163,7 +159,7 @@ function buildTableHTML(tableData) {
             <td class="${b.two.classes}" 
                 data-copyable="${b.two.copyableValue ?? ""}"
                 onClick="clickedCell(this)"
-                >${b.two.displayValue}</td>
+                ><strong>${b.two.displayValue}</strong></td>
         </tr>\n`
     }).join('')
 

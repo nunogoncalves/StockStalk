@@ -23,13 +23,14 @@ h1 {
     background-color: #8EA9DB;
     color: white;
 }
-    
+
 td.copyable {
     cursor: pointer;
 }
 
 td.copyable:hover {
     background-color: #6489ce;
+    color:  white;
 }
 
 td.null {
