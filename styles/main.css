@@ -1,0 +1,36 @@
+#mainContainer {
+    width: 180em;
+    border: 10px solid #fff;
+    padding: 2px;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.container-child {
+    max-width: 20%;
+    min-width: 3%;
+    float: left;
+    padding: 2px;
+    border: 2px solid red;
+} 
+
+h1 {
+    text-align: center;
+}
+
+.highlighted {
+    background-color: #8EA9DB;
+    color: white;
+}
+    
+td.copyable {
+    cursor: pointer;
+}
+
+td.copyable:hover {
+    background-color: #6489ce;
+}
+
+td.null {
+    color:  transparent;
+}
