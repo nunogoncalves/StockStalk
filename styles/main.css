@@ -11,6 +11,7 @@
     min-width: 3%;
     float: left;
     padding: 2px;
+    margin-right: 1px;
     border: 2px solid red;
 } 
 
