@@ -128,6 +128,26 @@ function changedTimePeriod(element) {
     loadAllTickers()
 }
 
+function goToNextDay() {
+    $(".highlighted").each((i, tr) => $(tr).removeClass("highlighted"))
+
+    var date = new Date($("#date_input").val())
+    date.setDate(date.getDate() + 1)
+
+    $("#date_input").val(new Date(date).toLocaleDateString("en-CA"))
+    clickedDateBox()
+}
+
+function goToPreviousDay() {
+    $(".highlighted").each((i, tr) => $(tr).removeClass("highlighted"))
+
+    var date = new Date($("#date_input").val())
+    date.setDate(date.getDate() - 1)
+
+    $("#date_input").val(new Date(date).toLocaleDateString("en-CA"))
+    clickedDateBox()
+}
+
 function clickedCell(td) {
     let toCopy = $(td).data("copyable")
     let text = `${toCopy}`.replaceAll(".", ",")

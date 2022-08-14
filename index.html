@@ -22,8 +22,9 @@
 <body onload="load()">
 
   <span>
+    <button onClick="goToPreviousDay()">Previous day</button>
     <input type="date" id="date_input" onchange="changedDate(this)">
-    <span id="copied-text-p"></span>
+    <button onClick="goToNextDay()">Next day</button>
     <span>
       Hide non selected dates
       <input type="checkbox" id="visibility_input" onchange="changedVisibility(this)">
