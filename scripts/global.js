@@ -39,7 +39,7 @@ function load() {
     });
 
     Handlebars.registerHelper('toFixed', function(arg1, arg2) {
-        return arg1.toFixed(arg2)
+        return arg1 == null ? "" : arg1.toFixed(arg2)
     });
 
     Handlebars.registerHelper('formatted_date', function(arg1) {
