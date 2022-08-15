@@ -28,7 +28,28 @@ function load() {
     $("#date_input").attr("max", new Date().toLocaleDateString("en-CA")) // Hammer time yeah!
     $("#date_input").change(clickedDateBox($("#date-picker")))
 
+    $("#stock_template").html(stockTemplate)
     bootstrap.Toast.Default.delay = 1000
+
+    Handlebars.registerHelper('eq', function () {
+        const args = Array.prototype.slice.call(arguments, 0, -1);
+        return args.every(function (expression) {
+            return args[0] === expression;
+        });
+    });
+
+    Handlebars.registerHelper('toFixed', function(arg1, arg2) {
+        return arg1.toFixed(arg2)
+    });
+
+    Handlebars.registerHelper('formatted_date', function(arg1) {
+        return new Date(arg1).toLocaleDateString("pt-PT")
+    });
+
+    Handlebars.registerHelper('ifNull', function(arg1, val1, val2) {
+        return (arg1 == null ? val1 : val2)
+    });
+
     loadAllTickers()
 }
 
@@ -44,59 +65,12 @@ function loadAllTickers() {
             let exchange = stocksAndExchanges.find(element => element.ticker == "USDEUR")
             stocks = stocksAndExchanges.filter(element => element.ticker != "USDEUR")
 
-            let tableData = { 
-                headers: ['Date', '€'], 
-                body: exchange.history.map(day => {
-                    return {
-                        row: { date: day.dateOutput },
-                        one: { classes: [], displayValue: day.dateOutput }, 
-                        two: { classes: [], displayValue: day.value.toFixed(4) } 
-                    }                    
-                })
-            }
-
             $("#date_input").attr("min", new Date(exchange.history[0].date).toLocaleDateString("en-CA")) // Hammer time yeah!
 
-            let exchangeHTML = `
-                <div class="container-child">
-                    <h1>${exchange.ticker}</h1>
-                    ${buildTableHTML(tableData)}
-                </div>
-            `
-
-            let stocksHTML = stocks.map(stock => {
-
-                let tableData = { 
-                    headers: ['$', '€'], 
-                    body: stock.history.map(day => {
-                        let dollarClasses = day.value == null ? "null" : ""
-                        let valueClasses = day.value == null ? "null" : "copyable"
-
-                        return {
-                            row: { date: day.dateOutput },
-                            one: { 
-                                classes: dollarClasses, 
-                                displayValue: day.value?.toFixed(4) ?? '' 
-                            }, 
-                            two: { 
-                                classes: valueClasses, 
-                                copyableValue: day.convertedValue,
-                                displayValue: day.convertedValue?.toFixed(4) ?? ''
-                            } 
-                        }                    
-                    })
-                }
-
-                return `
-                    <div class="container-child">
-                    <h1 data-ticker=${stock.ticker}>${stock.ticker}</h1>
-                    ${buildTableHTML(tableData)}
-                    </div>`
-            }).join('')
-
-            let html = exchangeHTML + stocksHTML
+            let source = $("#stock_template").html()
+            let template = Handlebars.compile(source)
+            let html = template([exchange].concat(stocks))
             $("#mainContainer").html(html)
-            clickedDateBox()
         })
 }
 
@@ -187,30 +161,4 @@ function copyStock(button) {
         return string 
     }).join("\n")
     copy(text)
-}
-
-function buildTableHTML(tableData) {
-    let headers = tableData.headers.map(h => `<th>${h}</th>`).join('')
-    
-    let bodyRows = tableData.body.map(b => {
-        return `<tr class="highlighted hidable row_${b.row.date}">
-            <td class="${b.one.classes}">${b.one.displayValue}</td>
-            <td class="${b.two.classes}" 
-                data-copyable="${b.two.copyableValue ?? ""}"
-                onClick="clickedCell(this)"
-                ><strong>${b.two.displayValue}</strong></td>
-        </tr>\n`
-    }).join('')
-
-    return `
-    <table>
-      <thead>
-        <tr>${headers}</tr>
-      </thead>
-      <tbody>
-        ${bodyRows}
-      </tbody>
-    </table>
-    <button class="btn btn-primary" style="width:100%" onClick="copyStock(this)">Copy all</button>
-    `
 }
