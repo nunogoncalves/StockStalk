@@ -42,7 +42,7 @@ function loadAllTickers() {
         .then(responses => {
             let stocksAndExchanges = responses.flatMap(response => response)
             let exchange = stocksAndExchanges.find(element => element.ticker == "USDEUR")
-            let stocks = stocksAndExchanges.filter(element => element.ticker != "USDEUR")
+            stocks = stocksAndExchanges.filter(element => element.ticker != "USDEUR")
 
             let tableData = { 
                 headers: ['Date', '€'], 
@@ -89,7 +89,7 @@ function loadAllTickers() {
 
                 return `
                     <div class="container-child">
-                    <h1>${stock.ticker}</h1>
+                    <h1 data-ticker=${stock.ticker}>${stock.ticker}</h1>
                     ${buildTableHTML(tableData)}
                     </div>`
             }).join('')
@@ -169,6 +169,25 @@ function copy(text) {
     toast.show()
 }
 
+function copyStock(button) {
+    let ticker = $($(button).closest(".container-child").find("h1")[0]).data("ticker")
+    let stock = stocks.find(stock => stock.ticker == ticker)
+
+    var d__ = new Date(stock.history[0].date).getDate()
+    let text = stock.history.map(day => { 
+
+        var string = "" 
+        let date = new Date(day.date)
+        if (date.getDate() > d__ + 1) {
+            string += "--\t \n--\t \n" 
+        }
+        d__ = date.getDate()
+
+        string += "" + day.dateOutput + "\t" + `${day.convertedValue}`.replaceAll(".", ",")
+        return string 
+    }).join("\n")
+    copy(text)
+}
 
 function buildTableHTML(tableData) {
     let headers = tableData.headers.map(h => `<th>${h}</th>`).join('')
@@ -190,6 +209,8 @@ function buildTableHTML(tableData) {
       </thead>
       <tbody>
         ${bodyRows}
+      </tbody>
     </table>
+    <button class="btn btn-primary" style="width:100%" onClick="copyStock(this)">Copy all</button>
     `
 }
