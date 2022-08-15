@@ -1,4 +1,51 @@
+const decimalPlacesStock = 2
+const decimalPlacesExchange = 4
+const maxWSJAPITickersPerRequest = 5
 var hideNonSelectedDates = false
+
+function load() {
+
+    $("#date_input").val(yyyyMMddFormatted(new Date())) // Hammer time yeah!
+    $("#date_input").attr("max", yyyyMMddFormatted(new Date())) // Hammer time yeah!
+    $("#date_input").change(clickedDateBox($("#date-picker")))
+
+    $("#stock_template").html(stockTemplate)
+    bootstrap.Toast.Default.delay = 1000
+
+    registerTemplateCustomFunctions()
+    loadAllTickers()
+}
+
+function registerTemplateCustomFunctions() {
+    Handlebars.registerHelper('eq', (arg1, arg2) => arg1 === arg2)
+    Handlebars.registerHelper('toFixed', (arg1, arg2) => arg1 == null ? "" : arg1.toFixed(arg2))
+    Handlebars.registerHelper('formatted_date', (arg1) => new Date(arg1).toLocaleDateString("pt-PT"))
+    Handlebars.registerHelper('ifNull', (arg1, val1, val2) => (arg1 == null ? val1 : val2))
+}
+
+function loadAllTickers() {
+
+    // WSJ api only allows for a maximum of 5 tickers. We want to include the exchange ticker in the request
+    // to have all dates in the response 
+    // (exchange returns all days, whereas stocks depend on the market being open)
+    let tickersRequests = chunkArray(allTickers, maxWSJAPITickersPerRequest - 1)
+    let reqs = tickersRequests.map(requestTickers => loadTickers(requestTickers.concat(exchangeTicker)))
+
+    Promise
+        .all(reqs)
+        .then(responses => {
+            let stocksAndExchanges = responses.flatMap(response => response)
+            let exchange = stocksAndExchanges.find(element => element.ticker == "USDEUR")
+            stocks = stocksAndExchanges.filter(element => element.ticker != "USDEUR")
+
+            $("#date_input").attr("min", yyyyMMddFormatted(new Date(exchange.history[0].date))) // Hammer time yeah!
+
+            let source = $("#stock_template").html()
+            let template = Handlebars.compile(source)
+            let html = template([exchange].concat(stocks))
+            $("#mainContainer").html(html)
+        })
+}
 
 function loadTickers(tickers) {
 
@@ -20,58 +67,6 @@ function loadTickers(tickers) {
         .catch(err => { 
             print(err)
         });
-}
-
-function load() {
-
-    $("#date_input").val(new Date().toLocaleDateString("en-CA")) // Hammer time yeah!
-    $("#date_input").attr("max", new Date().toLocaleDateString("en-CA")) // Hammer time yeah!
-    $("#date_input").change(clickedDateBox($("#date-picker")))
-
-    $("#stock_template").html(stockTemplate)
-    bootstrap.Toast.Default.delay = 1000
-
-    Handlebars.registerHelper('eq', function () {
-        const args = Array.prototype.slice.call(arguments, 0, -1);
-        return args.every(function (expression) {
-            return args[0] === expression;
-        });
-    });
-
-    Handlebars.registerHelper('toFixed', function(arg1, arg2) {
-        return arg1 == null ? "" : arg1.toFixed(arg2)
-    });
-
-    Handlebars.registerHelper('formatted_date', function(arg1) {
-        return new Date(arg1).toLocaleDateString("pt-PT")
-    });
-
-    Handlebars.registerHelper('ifNull', function(arg1, val1, val2) {
-        return (arg1 == null ? val1 : val2)
-    });
-
-    loadAllTickers()
-}
-
-function loadAllTickers() {
-
-    let tickersRequests = chunkArray(allTickers, 5)
-    let reqs = tickersRequests.map(requestTickers => loadTickers(requestTickers))
-
-    Promise
-        .all(reqs)
-        .then(responses => {
-            let stocksAndExchanges = responses.flatMap(response => response)
-            let exchange = stocksAndExchanges.find(element => element.ticker == "USDEUR")
-            stocks = stocksAndExchanges.filter(element => element.ticker != "USDEUR")
-
-            $("#date_input").attr("min", new Date(exchange.history[0].date).toLocaleDateString("en-CA")) // Hammer time yeah!
-
-            let source = $("#stock_template").html()
-            let template = Handlebars.compile(source)
-            let html = template([exchange].concat(stocks))
-            $("#mainContainer").html(html)
-        })
 }
 
 function changedDate(element) {
@@ -103,22 +98,32 @@ function changedTimePeriod(element) {
 }
 
 function goToNextDay() {
-    $(".highlighted").each((i, tr) => $(tr).removeClass("highlighted"))
 
     var date = new Date($("#date_input").val())
     date.setDate(date.getDate() + 1)
-
-    $("#date_input").val(new Date(date).toLocaleDateString("en-CA"))
-    clickedDateBox()
+    if(date.getDay() === 6) {
+        date.setDate(date.getDate() + 2)
+    } else if(date.getDay() === 0) {
+        date.setDate(date.getDate() + 1)
+    }
+    updateHighlighted(date)
 }
 
 function goToPreviousDay() {
-    $(".highlighted").each((i, tr) => $(tr).removeClass("highlighted"))
 
     var date = new Date($("#date_input").val())
     date.setDate(date.getDate() - 1)
+    if(date.getDay() === 6) {
+        date.setDate(date.getDate() - 1)
+    } else if(date.getDay() === 0) {
+        date.setDate(date.getDate() - 2)
+    }
+    updateHighlighted(date)
+}
 
-    $("#date_input").val(new Date(date).toLocaleDateString("en-CA"))
+function updateHighlighted(date) {
+    $(".highlighted").each((i, tr) => $(tr).removeClass("highlighted"))
+    $("#date_input").val(yyyyMMddFormatted(date))
     clickedDateBox()
 }
 

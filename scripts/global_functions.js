@@ -6,3 +6,5 @@ const chunkArray = (arr, size) =>
     arr.length > size
     ? [arr.slice(0, size), ...chunkArray(arr.slice(size), size)]
     : [arr];
+
+const yyyyMMddFormatted = (date) => date.toLocaleDateString("en-CA")
