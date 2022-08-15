@@ -36,3 +36,12 @@ td.copyable:hover {
 td.null {
     color:  transparent;
 }
+
+.cursor-grab {
+    cursor: grab
+}
+
+.hovered-date {
+    background-color: orange;
+    color: white;
+}

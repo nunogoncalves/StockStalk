@@ -128,6 +128,17 @@ function clickedCell(td) {
     copy(text)
 }
 
+function hoverDate(element) {
+    let date = $(element).data("date")
+    $.each($(".hovered-date"), (i, element) => $(element).removeClass("hovered-date"))
+    $.each($(".row_" + date), (i, element) => $(element).addClass("hovered-date"))
+}
+
+function hoverOutDate(element) {
+    let date = $(element).data("date")
+    $.each($(".hovered-date"), (i, element) => $(element).removeClass("hovered-date"))
+}
+
 function copySelected() {
     let toCopy = $.map($("tr.highlighted .copyable"), (element) => $(element).data("copyable")).join('\t\t')
     copy(toCopy.replaceAll(".", ","))

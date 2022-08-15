@@ -15,7 +15,7 @@ const stockTemplate =
         {{#each history}}
             <tr class="hidable row_{{dateOutput}}">
             {{#if (eq ../ticker "USDEUR")}}
-                <td>{{formatted_date date}}</td>
+                <td class="cursor-grab" data-date="{{dateOutput}}" onmouseover="hoverDate(this)">{{formatted_date date}}</td>
                 <td><strong>{{toFixed value 4}}</strong></td>
             {{else}}
                 <td class="{{ifNull value 'null' ''}}">{{toFixed value 4}}</td>
