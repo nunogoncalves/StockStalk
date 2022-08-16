@@ -45,6 +45,10 @@ function loadAllTickers() {
             let html = template([exchange].concat(stocks))
             $("#mainContainer").html(html)
         })
+        .catch(error => {
+            $("#errorContainer").show()
+            $("#errorMessage").text(error.message)
+        })
 }
 
 function loadTickers(tickers) {
@@ -64,9 +68,6 @@ function loadTickers(tickers) {
 
             return [exchange].concat(stocks)
         })
-        .catch(err => { 
-            print(err)
-        });
 }
 
 function changedDate(element) {
