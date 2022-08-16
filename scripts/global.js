@@ -5,11 +5,12 @@ var hideNonSelectedDates = false
 
 function load() {
 
-    $("#date_input").val(yyyyMMddFormatted(new Date())) // Hammer time yeah!
-    $("#date_input").attr("max", yyyyMMddFormatted(new Date())) // Hammer time yeah!
-    $("#date_input").change(clickedDateBox($("#date-picker")))
+    let dateInput = elementById("date_input")
+    dateInput.value = yyyyMMddFormatted(new Date()) // Hammer time yeah!
+    dateInput.setAttribute("max", yyyyMMddFormatted(new Date())) // Hammer time yeah!
+    dateInput.addEventListener('change', clickedDateBox);
 
-    $("#stock_template").html(stockTemplate)
+    elementById("stock_template").innerHTML = stockTemplate
     bootstrap.Toast.Default.delay = 1000
 
     registerTemplateCustomFunctions()
@@ -38,16 +39,16 @@ function loadAllTickers() {
             let exchange = stocksAndExchanges.find(element => element.ticker == "USDEUR")
             stocks = stocksAndExchanges.filter(element => element.ticker != "USDEUR")
 
-            $("#date_input").attr("min", yyyyMMddFormatted(new Date(exchange.history[0].date))) // Hammer time yeah!
+            elementById("date_input").setAttribute("min", yyyyMMddFormatted(new Date(exchange.history[0].date))) // Hammer time yeah!
 
-            let source = $("#stock_template").html()
+            let source = elementById("stock_template").innerHTML
             let template = Handlebars.compile(source)
             let html = template([exchange].concat(stocks))
-            $("#mainContainer").html(html)
+            elementById("mainContainer").innerHTML = html
         })
         .catch(error => {
-            $("#errorContainer").show()
-            $("#errorMessage").text(error.message)
+            show(elementById("errorContainer"))
+            elementById("errorMessage").innerHTML = error.message
         })
 }
 
@@ -75,32 +76,31 @@ function changedDate(element) {
 }
 
 function clickedDateBox() {
-    $(".highlighted").each((i, tr) => $(tr).removeClass("highlighted"))
+    elementsByClass("highlighted").forEach(tr => removeClass("highlighted", tr))
 
-    let date = new Date($("#date_input").val()).toLocaleDateString().replaceAll("/", "-")
+    let date = new Date(elementById("date_input").value).toLocaleDateString().replaceAll("/", "-")
     let dateClass = `row_${date}`
-     $(`.${dateClass}`).each((i, tr) => $(tr).addClass("highlighted"))
-     changedVisibility()
+    elementsByClass(dateClass).forEach(tr => addClass("highlighted", tr))
+    changedVisibility()
 }
 
 function changedVisibility() {    
-    if ($("#visibility_input").is(":checked")) {
-
-        $("tr.hidable").not(".highlighted").hide()
-        $("tr.highlighted").show()
+    if (elementById("visibility_input").checked == true) {
+        elementsByQuery("tr.hidable:not([highlighted])").forEach(tr => hide(tr))
+        elementsByQuery("tr.highlighted").forEach(tr => show(tr))
     } else {
-        $("tr.hidable").show()
+        elementsByQuery("tr.hidable").forEach(tr => show(tr))
     }
 }
 
 function changedTimePeriod(element) {
-    timePeriod = $(element).val()
+    timePeriod = element.value
     loadAllTickers()
 }
 
 function goToNextDay() {
 
-    var date = new Date($("#date_input").val())
+    var date = new Date(elementById("date_input").value)
     date.setDate(date.getDate() + 1)
     if(date.getDay() === 6) {
         date.setDate(date.getDate() + 2)
@@ -112,7 +112,7 @@ function goToNextDay() {
 
 function goToPreviousDay() {
 
-    var date = new Date($("#date_input").val())
+    var date = new Date(elementById("date_input").value)
     date.setDate(date.getDate() - 1)
     if(date.getDay() === 6) {
         date.setDate(date.getDate() - 1)
@@ -123,30 +123,30 @@ function goToPreviousDay() {
 }
 
 function updateHighlighted(date) {
-    $(".highlighted").each((i, tr) => $(tr).removeClass("highlighted"))
-    $("#date_input").val(yyyyMMddFormatted(date))
+    elementsByClass("highlighted").forEach(tr => removeClass("highlighted", tr))
+    elementById("date_input").value = yyyyMMddFormatted(date)
     clickedDateBox()
 }
 
 function clickedCell(td) {
-    let toCopy = $(td).data("copyable")
+    let toCopy = td.dataset.copyable
     let text = `${toCopy}`.replaceAll(".", ",")
     copy(text)
 }
 
 function hoverDate(element) {
-    let date = $(element).data("date")
-    $.each($(".hovered-date"), (i, element) => $(element).removeClass("hovered-date"))
-    $.each($(".row_" + date), (i, element) => $(element).addClass("hovered-date"))
+    let date = element.dataset.date
+    elementsByClass("hovered-date").forEach(element => removeClass("hovered-date", element))
+    elementsByClass("row_" + date).forEach(element => addClass("hovered-date", element))
 }
 
 function hoverOutDate(element) {
-    let date = $(element).data("date")
-    $.each($(".hovered-date"), (i, element) => $(element).removeClass("hovered-date"))
+    let date = element.dataset.date
+    elementsByClass("hovered-date").forEach(element => removeClass("hovered-date", element))
 }
 
 function copySelected() {
-    let toCopy = $.map($("tr.highlighted .copyable"), (element) => $(element).data("copyable")).join('\t\t')
+    let toCopy = elementsByQuery("tr.highlighted .copyable").map(element => element.dataset.copyable).join('\t\t')
     copy(toCopy.replaceAll(".", ","))
 }
 
@@ -154,14 +154,15 @@ function copy(text) {
 
     navigator.clipboard.writeText(text);
 
-    const toastLiveExample = document.getElementById('liveToast')
-    $(".toast-body").text("Copied text " + text + " to the clipboard")
+    const toastLiveExample = elementById('liveToast')
+    elementsByClass("toast-body")[0].innerHTML = "Copied text " + text + " to the clipboard"
     const toast = new bootstrap.Toast(toastLiveExample)
     toast.show()
 }
 
 function copyStock(button) {
-    let ticker = $($(button).closest(".container-child").find("h1")[0]).data("ticker")
+
+    let ticker = button.closest(".container-child").querySelector("h2").dataset.ticker
     let stock = stocks.find(stock => stock.ticker == ticker)
 
     var d__ = new Date(stock.history[0].date).getDate()
