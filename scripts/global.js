@@ -161,9 +161,8 @@ function copy(text) {
 }
 
 function copyStock(button) {
-    let ticker = $($(button).closest(".container-child").find("h1")[0]).data("ticker")
+    let ticker = $($(button).closest(".container-child").find("h2")[0]).data("ticker")
     let stock = stocks.find(stock => stock.ticker == ticker)
-
     var d__ = new Date(stock.history[0].date).getDate()
     let text = stock.history.map(day => { 
 
