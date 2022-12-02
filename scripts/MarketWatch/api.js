@@ -10,6 +10,7 @@ const allTickers = [
     "STOCK/US/XNAS/AMZN",
     "STOCK/US/XNAS/TSLA",
     "STOCK/US/XNYS/NET",
+    "STOCK/US/XNYS/PG",
 ]
 
 const timePeriods = ["P1M", "P3M", "P3M", "P1Y", "P3Y"] 
