@@ -11,6 +11,8 @@ const allTickers = [
     "STOCK/US/XNAS/TSLA",
     "STOCK/US/XNYS/NET",
     "STOCK/US/XNYS/PG",
+    "STOCK/XE/XETR/VOW3",
+    "STOCK/US/XNYS/JNJ",
 ]
 
 const timePeriods = ["P1M", "P3M", "P3M", "P1Y", "P3Y"] 
