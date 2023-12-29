@@ -1,6 +1,5 @@
 const exchangeTicker = "CURRENCY/US/XTUP/USDEUR"
 const allTickers = [
-    "STOCK/US/XNYS/FTCH",
     "FUND/NL/XAMS/VUSA",
     "STOCK/US/XNAS/AAPL",
     "STOCK/US/XNYS/SHOP",
