@@ -2,7 +2,7 @@ const exchangeTicker = "CURRENCY/US/XTUP/USDEUR"
 const allTickers = [
     "FUND/NL/XAMS/VUSA",
     "STOCK/US/XNAS/AAPL",
-    "STOCK/US/XNYS/SHOP",
+    //"STOCK/US/XNYS/SHOP",
     "STOCK/US/XNAS/MSFT",
     "STOCK/US/XNYS/DIS",
     "STOCK/US/XNAS/ABNB",
@@ -11,8 +11,11 @@ const allTickers = [
     "STOCK/US/XNYS/NET",
     "STOCK/US/XNYS/PG",
     "STOCK/XE/XETR/VOW3",
+    "STOCK/XE/XETR/MBG",
     "STOCK/US/XNYS/JNJ",
     "STOCK/US/XNYS/NKE",
+    "STOCK/XE/XETR/MBG",
+    "STOCK/US/XNYS/WM"
 ]
 
 const timePeriods = ["P1M", "P3M", "P3M", "P1Y", "P3Y"] 

@@ -19,7 +19,12 @@ const stockTemplate =
                 <td><strong>{{toFixed value ${decimalPlacesExchange}}}</strong></td>
             {{else}}
                 <td class="{{ifNull value 'null' ''}}">{{toFixed value ${decimalPlacesStock}}}</td>
-                <td class="copyable {{ifNull value 'null' ''}}" data-copyable="{{convertedValue}}" onClick="clickedCell(this)"><strong>{{toFixed convertedValue ${decimalPlacesStock}}}</strong></td>
+                <td 
+                    class="copyable {{ifNull value 'null' ''}} {{redGreenOrNothing ../history @index 'convertedValue'}}" 
+                    data-copyable="{{convertedValue}}" onClick="clickedCell(this)"
+                >
+                    <strong>{{toFixed convertedValue ${decimalPlacesStock}}}</strong>
+                </td>
             {{/if}}
         </tr>
         {{/each}}

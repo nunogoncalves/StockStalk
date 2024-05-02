@@ -21,6 +21,18 @@ function registerTemplateCustomFunctions() {
     Handlebars.registerHelper('toFixed', (arg1, arg2) => arg1 == null ? "" : arg1.toFixed(arg2))
     Handlebars.registerHelper('formatted_date', (arg1) => new Date(arg1).toLocaleDateString("pt-PT"))
     Handlebars.registerHelper('ifNull', (arg1, val1, val2) => (arg1 == null ? val1 : val2))
+    Handlebars.registerHelper('prevItem', (array, index, value, options) => (index == 0 ? array[0][value] : array[index - 1][value] ))
+    Handlebars.registerHelper('redGreenOrNothing', function(array, index, value, options) {
+        if (index == 0) {
+            return ""
+        } else if (array[index - 1][value] > array[index][value]) {
+            return "red"
+        } else if (array[index - 1][value] == array[index][value]) {
+            return ""
+        } else {
+            return "lightgreen"
+        }
+    }) 
 }
 
 function loadAllTickers() {

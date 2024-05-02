@@ -15,6 +15,10 @@
     border: 2px solid rgb(202, 226, 251);
 } 
 
+tbody {
+    font-size: 14px;
+}
+
 h2 {
   text-align: center;
 }
@@ -42,6 +46,21 @@ td.null {
 }
 
 .hovered-date {
-    background-color: orange;
+    background-color: orange !important;
+    color: white;
+}
+
+.hovered-date td {
+    background-color: orange !important;
+    color: white;
+}
+
+.lightgreen {
+    background-color: green;
+    color: white;
+}
+
+.red {
+    background-color: red;
     color: white;
 }
