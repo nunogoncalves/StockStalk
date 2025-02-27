@@ -142,7 +142,7 @@ function updateHighlighted(date) {
 
 function clickedCell(td) {
     let toCopy = $(td).data("copyable")
-    let text = `${toCopy}`.replaceAll(".", ",")
+    let text = `${toCopy}`//.replaceAll(".", ",")
     copy(text)
 }
 
